@@ -279,9 +279,16 @@ class TagDefineAtlas2(Tag):
 		Tag.__init__(self, context)
 
 class TagDefineStage(Tag):
-	"""xxx"""
+	"""General information for stage"""
 	def __init__(self, context):
 		Tag.__init__(self, context)
+
+	def doParse(self, inStream, length):
+		self.data['fps'] = readU8(inStream)
+		self.data['color'] = readColor(inStream)
+		self.data['width'] = readU16(inStream)
+		self.data['height'] = readU16(inStream)
+    
 
 class TagDefineAnimationMasks2(Tag):
 	"""xxx"""
