@@ -1,31 +1,23 @@
 from GAFpy import Tags
 from GAFpy.utils import readU32, readU16, readU8, readFloat, readString, readVec, readRect
 
-def readTag(inStream, parent, context):
-	tagId = readU16(inStream)
-	#print("TagId = {0}".format(tagId))
-	tag = Tags.TagUnknown(context)
-	try:
-		tag = Tags.TagList[tagId](context)
-	except KeyError:
-		print("GAF format warning. Unknonwn tag with number {0}".format(tagId))
-	tag.parse(inStream)
-	parent.append(tag.getData())
-	return tag
 
 class Parser:
-	context = {}
+	_context = {}
 
+	def __init__(self):
+		self._context = {}
+		
 	def result(self):
-		return self.context
+		return self._context
 
 	def parse(self, inStream):
 		self.readHeader(inStream)
-		self.context["tags"] = []
+		self._context["tags"] = []
 
-		lastTag = Tags.TagUnknown(self)
+		lastTag = Tags.Tag(self)
 		while type(lastTag) is not Tags.TagEnd:
-			lastTag = readTag(inStream, self.context["tags"], self.context)
+			lastTag = Tags.readTag(inStream, self._context["tags"], self._context)
 
 
 
@@ -46,7 +38,7 @@ class Parser:
 		h['majorVersion'] = majorVersion
 		h['minorVersion'] = minorVersion
 
-		self.context['header'] = h
+		self._context['header'] = h
 		if(majorVersion < 4):
 			self.readHeaderEndV3(inStream)
 		else:
@@ -58,14 +50,14 @@ class Parser:
 		frameSize = readRect(inStream)
 		pivot = readVec(inStream)
 
-		h = self.context['header']
+		h = self._context['header']
 		h['frameCount'] = frameCount
 		h['frameSize'] = frameSize
 		h['pivot'] = pivot
-		self.context['header'] = h
+		self._context['header'] = h
 
 	def readHeaderEndV4(self, inStream):
-		h = self.context['header']
+		h = self._context['header']
 
 		scaleValuesCount = readU32(inStream)		
 		h['scaleValuesCount'] = scaleValuesCount
@@ -85,5 +77,5 @@ class Parser:
 			CSFValuesCount -= 1
 		h['CSFValues'] = CSFValues
 		
-		self.context['header'] = h
+		self._context['header'] = h
 		

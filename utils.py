@@ -28,3 +28,22 @@ def readRect(s):
 	ret['pos'] = readVec(s)
 	ret['size'] = readVec(s)
 	return ret
+
+def readAffineTransform(s):
+	ret = {}
+	ret['a'] = readFloat(s)
+	ret['b'] = readFloat(s)
+	ret['c'] = readFloat(s)
+	ret['d'] = readFloat(s)
+	ret['tx'] = readFloat(s)
+	ret['ty'] = readFloat(s)
+	return ret
+
+
+def readColor(s):
+	ret = {}
+	ret['r'] = readU8(s)
+	ret['g'] = readU8(s)
+	ret['b'] = readU8(s)
+	ret['a'] = readU8(s)
+	return ret
