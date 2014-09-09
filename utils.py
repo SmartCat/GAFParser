@@ -3,6 +3,9 @@ import struct
 def readU32(s):
 	return struct.unpack("<I", s.read(4))[0]
 
+def readS32(s):
+	return struct.unpack("<i", s.read(4))[0]
+
 def readU16(s):
 	return struct.unpack("<H", s.read(2))[0]
 

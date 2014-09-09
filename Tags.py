@@ -1,5 +1,5 @@
 import struct
-from GAFpy.utils import readU32, readU16, readU8, readFloat, readString, readVec, readColor, readAffineTransform, readRect
+from GAFpy.utils import readS32, readU32, readU16, readU8, readFloat, readString, readVec, readColor, readAffineTransform, readRect
 #import GAFpy.Parser
 
 def readTag(inStream, parent, context):
@@ -11,7 +11,7 @@ def readTag(inStream, parent, context):
 		print type(tag)
 	except KeyError:
 		print("GAF format warning. Unknonwn tag with number {0}".format(tagId))
-	tag.parse(inStream)
+	tag.parse(inStream, parent)
 	parent.append({'name': tag.type(), 'content': tag.data})
 	return tag
 
@@ -28,11 +28,11 @@ class Tag(object):
 		self._data = {}
 		self._context = context
 
-	def parse(self, inStream):
+	def parse(self, inStream, parent):
 		length = readU32(inStream)
-		self.doParse(inStream, length)
+		self.doParse(inStream, length, parent)
 
-	def doParse(self, inStream, length):
+	def doParse(self, inStream, length, parent):
 		#print("Tag length is {0}".format(length))
 		inStream.read(length)
 
@@ -58,7 +58,7 @@ class TagEnd(Tag):
 	def __init__(self, context):
 		Tag.__init__(self, context)
 
-	def parse(self, inStream):
+	def parse(self, inStream, parent):
 		return
 
 class TagDefineAtlas(Tag):
@@ -66,7 +66,7 @@ class TagDefineAtlas(Tag):
 	def __init__(self, context):
 		Tag.__init__(self, context)
 		
-	def doParse(self, inStream, length):
+	def doParse(self, inStream, length, parent):
 		c = self._data
 		scale = readFloat(inStream)
 		c['scale'] = scale
@@ -126,7 +126,7 @@ class TagDefineAnimationMasks(Tag):
 	def __init__(self, context):
 		Tag.__init__(self, context)
 
-	def doParse(self, inStream, length):
+	def doParse(self, inStream, length, parent):
 		masksCount = readU32(inStream)
 		masks = []
 		for i in range(0, masksCount):
@@ -145,7 +145,7 @@ class TagDefineAnimationObjects(Tag):
 	def __init__(self, context):
 		Tag.__init__(self, context)
 
-	def doParse(self, inStream, length):
+	def doParse(self, inStream, length, parent):
 		c = self._data
 		count = readU32(inStream)
 		c["objectsCount"] = count
@@ -175,7 +175,7 @@ class TagDefineAnimationFrames(Tag):
 	def __init__(self, context):
 		Tag.__init__(self, context)
 
-	def doParse(self, inStream, length):
+	def doParse(self, inStream, length, parent):
 		startPos = inStream.tell()
 		c = self._data
 		c['states'] = []
@@ -280,23 +280,125 @@ class TagDefineStage(Tag):
 	def __init__(self, context):
 		Tag.__init__(self, context)
 
-	def doParse(self, inStream, length):
+	def doParse(self, inStream, length, parent):
 		self.data['fps'] = readU8(inStream)
 		self.data['color'] = readColor(inStream)
 		self.data['width'] = readU16(inStream)
 		self.data['height'] = readU16(inStream)
     
-class TagDefineAnimationFrames2(Tag):
-	"""xxx"""
+class TagDefineAnimationFrames2(TagDefineAnimationFrames):
+	"""Animation frames for version 4.x"""
+	GFT_ColorMatrix = 6
+
 	def __init__(self, context):
 		Tag.__init__(self, context)
+
+	def doParse(self, inStream, length, parent):
+		startPos = inStream.tell()
+		count = readU32(inStream)
+		t = TagDefineAnimationObjects(0)
+		animatedObjects = [a for a in parent if a['name'] == t.type()][0]['content']['objects']
+		
+		currentStates = {}
+		for i in range(0, len(animatedObjects)):
+			objectId = i
+			currentStates[i] = {}
+		
+		frameNumber = readU32(inStream)
+
+		for i in range(0, count):
+			hasChangesInDisplayList = readU8(inStream)
+			hasActions = readU8(inStream)
+
+			if hasChangesInDisplayList:
+				numObjects = readU32(inStream)
+				for j in range(0, numObjects):
+					self.extractState(inStream)
+
+			if hasActions:
+				actionType = readU32(inStream)
+				paramsCount = readU32(inStream)
+				for i in range(0, paramsCount):
+					paramValue = readString(inStream)
+
+			#print "expected end:{1} current: {1}".format(startPos + length, inStream.tell())
+			if startPos + length > inStream.tell():
+				frameNumber = readU32(inStream)
+
+
+	def extractState(self, inStream):
+		state = {}
+		hasColorTransform = readU8(inStream)
+		hasMasks = readU8(inStream)
+		hasEffect = readU8(inStream)
+		state['objectIdRef'] = readU32(inStream)
+		state['zIndex'] = readS32(inStream)
+		state['colorOffsets'] = {}
+		state['colorMults'] = {'a' :readFloat(inStream)}
+		state['affineTransform'] = readAffineTransform(inStream)
+		if hasColorTransform:
+			state['colorOffsets']['a'] = readFloat(inStream)
+			state['colorMults']['r'] = readFloat(inStream)
+			state['colorOffsets']['r'] = readFloat(inStream)
+			state['colorMults']['g'] = readFloat(inStream)
+			state['colorOffsets']['g'] = readFloat(inStream)
+			state['colorMults']['b'] = readFloat(inStream)
+			state['colorOffsets']['b'] = readFloat(inStream)
+		else:			
+			state['colorOffsets']['a'] = 0
+			state['colorMults']['r'] = 1
+			state['colorOffsets']['r'] = 0
+			state['colorMults']['g'] = 1
+			state['colorOffsets']['g'] = 0
+			state['colorMults']['b'] = 1
+			state['colorOffsets']['b'] = 0
+
+		if hasEffect:
+			state['effects'] = []
+			effects = readU8(inStream)
+			for e in range(0, effects):
+				filterType = readU32(inStream)
+				filt = {'type' : 'none'}
+				if filterType == self.GFT_Blur:
+					filt['type'] = 'blur'
+					filt['blurSize'] = readVec(inStream)					
+				elif filt == self.GFT_Glow:
+					filt['type'] = 'glow'
+					filt['color'] = readColor(inStream)
+					filt['blurSize'] = readVec(inStream)
+					filt['strength'] = readFloat(inStream)
+					filt['innerGlow'] = bool(readU8(inStream))
+					filt['knockout'] = bool(readU8(inStream))
+				elif filt == self.GFT_DropShadow:
+					filt['type'] = 'dropShadow'
+					filt['color'] = readColor(inStream)
+					filt['angle'] = readFloat(inStream)
+					filt['distance'] = readFloat(inStream)
+					filt['strength'] = readFloat(inStream)
+					filt['innerShadow'] = readFloat(inStream)
+					filt['knockout'] = readFloat(inStream)
+				elif filt == self.GFT_ColorMatrix:
+					filt['type'] = 'colorMatrix'
+					matrix = []
+					for i in range(0, 4):
+						for j in range(0, 4):
+							matrix[j * 4 + i] = readFloat(inStream)
+						matrix2[i] = readFloat(inStream) / 256
+
+
+				state['effects'].append(filt)
+
+		if hasMasks:
+			state['maskObjectIdRef'] = readU32(inStream)
+		return state
+
 
 class TagDefineTimeline(Tag):
 	"""Timeline tag. Since v4.0"""
 	def __init__(self, context):
 		Tag.__init__(self, context)
 
-	def doParse(self, inStream, length):
+	def doParse(self, inStream, length, parent):
 		readU32(inStream)
 		readU32(inStream)
 		aabb = readRect(inStream)
