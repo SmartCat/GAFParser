@@ -119,15 +119,26 @@ class TagDefineAtlas(Tag):
 
 			elements.append(element)
 		c['elements'] = elements
-
-
-
 		self._data = c
 
 class TagDefineAnimationMasks(Tag):
-	"""xxx"""
+	"""Masks for animations"""
 	def __init__(self, context):
 		Tag.__init__(self, context)
+
+	def doParse(self, inStream, length):
+		masksCount = readU32(inStream)
+		masks = []
+		for i in range(0, masksCount):
+			mask = {}
+			mask['objectId'] = readU32(inStream)
+			mask['elementAtlasIdRef'] = readU32(inStream)
+			objectType = 0
+			if self.version() >= 4:
+				objectType = readU16(inStream)
+			mask['objectType'] = objectType
+			masks.append(mask)
+		self._data['masks'] = masks
 	
 class TagDefineAnimationObjects(Tag):
 	"""Objects in animation"""
@@ -297,7 +308,7 @@ class TagDefineTimeline(Tag):
 			linkageName = readString(inStream)
 		d = []
 		readTag(inStream, d, self._context)
-		self._data['timelines'] = d
+		self._data['tags'] = d
 
 TagList = {
 0: TagEnd,
