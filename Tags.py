@@ -73,57 +73,55 @@ class TagDefineAtlas(Tag):
 		atlasesCount = readU8(inStream)
 		c['atlasesCount'] = atlasesCount
 		atlases = []
-		while atlasesCount:
+		for i in range(0, atlasesCount):
 			atlas = {}
 			atlasId = readU32(inStream)
 			atlas['atlasId'] = atlasId
 			sources = readU8(inStream)
 			atlas['atlasSourcesCount'] = sources
 			atlas['atlasSources'] = []
-			while sources:
+			for i in range(0, sources):
 				atlasSource = {}
 				fileName = readString(inStream)
 				atlasSource['fileName'] = fileName
 				csf = readFloat(inStream)
 				atlasSource['CSF'] = csf
 				atlas['atlasSources'].append(atlasSource)
-				sources -= 1
-			atlasesCount -= 1
 			atlases.append(atlas)
 		c['atlases'] = atlases
 
+		elements = []
 		elementsCount = readU32(inStream)
-		while elementsCount:
-			# pivot
-			readFloat(inStream)
-			readFloat(inStream)
-			# origin
-			readFloat(inStream)
-			readFloat(inStream)
+		for i in range(0, elementsCount):
+			element = {}
+			element['pivot'] = readVec(inStream)
+			element['origin'] = readVec(inStream)
 			
-			scale = readFloat(inStream)
+			element['scale'] = readFloat(inStream)
 
-			width = readFloat(inStream)
-			height = readFloat(inStream)
+			element['width'] = readFloat(inStream)
+			element['height'] = readFloat(inStream)
 
-			atlasIndex = readU32(inStream) - 1
-			if atlasIndex < 0:
-				atlasIndex + 1
+			atlasIndex = readU32(inStream)
+			if atlasIndex > 0:
+				atlasIndex -= 1
+			element['atlasIndex'] = atlasIndex
 
 			elementAtlasIndex = readU32(inStream)
+			element['elementAtlasIndex'] = elementAtlasIndex
 
 			if self.version() >= 4:
 				hasScale9Grid = readU8(inStream)
+				element['hasScale9Grid'] = hasScale9Grid
 				if hasScale9Grid:
 					# scale9GridRect
-					readFloat(inStream)
-					readFloat(inStream)
-					readFloat(inStream)
-					readFloat(inStream)
+					element['scale9Grid'] = readRect(inStream)
+
+			elements.append(element)
+		c['elements'] = elements
 
 
 
-			elementsCount -= 1
 		self._data = c
 
 class TagDefineAnimationMasks(Tag):
@@ -266,11 +264,6 @@ class TagDefineTextFields(Tag):
 	def __init__(self, context):
 		Tag.__init__(self, context)
 
-class TagDefineAtlas2(Tag):
-	"""xxx"""
-	def __init__(self, context):
-		Tag.__init__(self, context)
-
 class TagDefineStage(Tag):
 	"""General information for stage"""
 	def __init__(self, context):
@@ -282,16 +275,6 @@ class TagDefineStage(Tag):
 		self.data['width'] = readU16(inStream)
 		self.data['height'] = readU16(inStream)
     
-class TagDefineAnimationMasks2(Tag):
-	"""xxx"""
-	def __init__(self, context):
-		Tag.__init__(self, context)
-
-class TagDefineAnimationObjects2(Tag):
-	"""xxx"""
-	def __init__(self, context):
-		Tag.__init__(self, context)
-
 class TagDefineAnimationFrames2(Tag):
 	"""xxx"""
 	def __init__(self, context):
@@ -325,10 +308,10 @@ TagList = {
 5: TagDefineNamedParts,
 6: TagDefineSequences,
 7: TagDefineTextFields,
-8: TagDefineAtlas2,
+8: TagDefineAtlas,
 9: TagDefineStage,
-11: TagDefineAnimationMasks2,
-10: TagDefineAnimationObjects2,
+11: TagDefineAnimationMasks,
+10: TagDefineAnimationObjects,
 12: TagDefineAnimationFrames2,
 13: TagDefineTimeline}
 
