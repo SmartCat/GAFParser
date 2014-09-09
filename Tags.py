@@ -1,5 +1,5 @@
 import struct
-from GAFpy.utils import readU32, readU16, readU8, readFloat, readString, readVec, readColor, readAffineTransform
+from GAFpy.utils import readU32, readU16, readU8, readFloat, readString, readVec, readColor, readAffineTransform, readRect
 #import GAFpy.Parser
 
 def readTag(inStream, parent, context):
@@ -126,13 +126,11 @@ class TagDefineAtlas(Tag):
 			elementsCount -= 1
 		self._data = c
 
-
 class TagDefineAnimationMasks(Tag):
 	"""xxx"""
 	def __init__(self, context):
 		Tag.__init__(self, context)
-		
-
+	
 class TagDefineAnimationObjects(Tag):
 	"""Objects in animation"""
 	def __init__(self, context):
@@ -157,7 +155,6 @@ class TagDefineAnimationObjects(Tag):
 		c["objects"] = objects
 		self._data = c
 	
-
 class TagDefineAnimationFrames(Tag):
 	"""Each frame state"""
 
@@ -254,15 +251,11 @@ class TagDefineAnimationFrames(Tag):
 			state['maskObjectIdRef'] = readU32(inStream)
 		return state
 
-
-
-
 class TagDefineNamedParts(Tag):
 	"""xxx"""
 	def __init__(self, context):
 		Tag.__init__(self, context)
-		
-
+	
 class TagDefineSequences(Tag):
 	"""xxx"""
 	def __init__(self, context):
@@ -289,7 +282,6 @@ class TagDefineStage(Tag):
 		self.data['width'] = readU16(inStream)
 		self.data['height'] = readU16(inStream)
     
-
 class TagDefineAnimationMasks2(Tag):
 	"""xxx"""
 	def __init__(self, context):
@@ -306,10 +298,23 @@ class TagDefineAnimationFrames2(Tag):
 		Tag.__init__(self, context)
 
 class TagDefineTimeline(Tag):
-	"""xxx"""
+	"""Timeline tag. Since v4.0"""
 	def __init__(self, context):
 		Tag.__init__(self, context)
 
+	def doParse(self, inStream, length):
+		readU32(inStream)
+		readU32(inStream)
+		aabb = readRect(inStream)
+		pivot = readVec(inStream)
+		self.header()['pivot'] = pivot
+		self.header()['frameSize'] = aabb
+		hasLinkage = readU8(inStream)
+		if hasLinkage:
+			linkageName = readString(inStream)
+		d = []
+		readTag(inStream, d, self._context)
+		self._data['timelines'] = d
 
 TagList = {
 0: TagEnd,
