@@ -271,9 +271,20 @@ class TagDefineAnimationFrames(Tag):
 		return state
 
 class TagDefineNamedParts(Tag):
-	"""xxx"""
+	"""Objects with names"""
 	def __init__(self, context):
 		Tag.__init__(self, context)
+
+	def doParse(self, inStream, length, parent):
+		count = readU32(inStream)
+		self.data['parts'] = []
+
+		for i in range(0, count):
+			part = {}
+			part['objectIdRef'] = readU32(inStream)
+			part['name'] = readString(inStream)
+			self.data['parts'].append(part)
+
 	
 class TagDefineSequences(Tag):
 	"""xxx"""
@@ -338,7 +349,7 @@ class TagDefineAnimationFrames2(TagDefineAnimationFrames):
 			#print "expected end:{1} current: {1}".format(startPos + length, inStream.tell())
 			if startPos + length > inStream.tell():
 				frameNumber = readU32(inStream)
-				
+
 		self._data = c
 
 	def extractState2(self, inStream):
