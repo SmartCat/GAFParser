@@ -254,6 +254,16 @@ class TagDefineAnimationFrames(Tag):
 					filt['strength'] = readFloat(inStream)
 					filt['innerShadow'] = readFloat(inStream)
 					filt['knockout'] = readFloat(inStream)
+				elif filt == self.GFT_ColorMatrix:
+					filt['type'] = 'colorMatrix'
+					matrix = []
+					matrix2 = []
+					for i in range(0, 4):
+						for j in range(0, 4):
+							matrix[j * 4 + i] = readFloat(inStream)
+						matrix2[i] = readFloat(inStream) / 256
+					filt['matrix'] = matrix
+					filt['matrix2'] = matrix2
 				state['effects'].append(filt)
 
 		if hasMasks:
@@ -288,45 +298,50 @@ class TagDefineStage(Tag):
     
 class TagDefineAnimationFrames2(TagDefineAnimationFrames):
 	"""Animation frames for version 4.x"""
-	GFT_ColorMatrix = 6
 
 	def __init__(self, context):
 		Tag.__init__(self, context)
 
 	def doParse(self, inStream, length, parent):
 		startPos = inStream.tell()
-		count = readU32(inStream)
-		t = TagDefineAnimationObjects(0)
-		animatedObjects = [a for a in parent if a['name'] == t.type()][0]['content']['objects']
+		c = self._data
 		
-		currentStates = {}
-		for i in range(0, len(animatedObjects)):
-			objectId = i
-			currentStates[i] = {}
+		count = readU32(inStream)
+		c["states"] = []
+
 		
 		frameNumber = readU32(inStream)
 
 		for i in range(0, count):
+			frameState = {}
 			hasChangesInDisplayList = readU8(inStream)
 			hasActions = readU8(inStream)
+			frameState['hasChangesInDisplayList'] = hasChangesInDisplayList
+			frameState['hasActions'] = hasActions
 
 			if hasChangesInDisplayList:
+				frameState['changesInDisplayList'] = []
 				numObjects = readU32(inStream)
 				for j in range(0, numObjects):
-					self.extractState(inStream)
+					frameState['changesInDisplayList'].append(self.extractState(inStream))
+
 
 			if hasActions:
-				actionType = readU32(inStream)
+				frameState['actionParams'] = []
+				frameState['actionType'] = readU32(inStream)
 				paramsCount = readU32(inStream)
 				for i in range(0, paramsCount):
-					paramValue = readString(inStream)
+					frameState['actionParams'].append(readString(inStream))
+
+			c["states"].append(frameState)
 
 			#print "expected end:{1} current: {1}".format(startPos + length, inStream.tell())
 			if startPos + length > inStream.tell():
 				frameNumber = readU32(inStream)
+				
+		self._data = c
 
-
-	def extractState(self, inStream):
+	def extractState2(self, inStream):
 		state = {}
 		hasColorTransform = readU8(inStream)
 		hasMasks = readU8(inStream)
@@ -391,7 +406,6 @@ class TagDefineAnimationFrames2(TagDefineAnimationFrames):
 		if hasMasks:
 			state['maskObjectIdRef'] = readU32(inStream)
 		return state
-
 
 class TagDefineTimeline(Tag):
 	"""Timeline tag. Since v4.0"""
