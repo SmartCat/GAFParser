@@ -2,11 +2,11 @@
 
 Returns dictionary of header and tags in GAF
 
-import GAFpy, os
+import GAFParser, os
 
 gafFiles = [a for a in os.listdir('.') if os.path.isfile(a) and os.path.splitext(a)[1] == '.gaf']
 for f in gafFiles:
-	g = GAFpy.load(f)
+	g = GAFParser.load(f)
 	majorVersion = g['header']['majorVersion']
 	minorVersion = g['header']['minorVersion']
 	compressed = g['header']['compressed']
@@ -14,13 +14,13 @@ for f in gafFiles:
 
 
 """
-from GAFpy.Parser import Parser
+import Parser
 
 def load(file):
 	try:
 		f = open(file, 'rb')
 	finally:
-		p = Parser()
+		p = Parser.Parser()
 		p.parse(f)
 		f.close()
 		return p.result()

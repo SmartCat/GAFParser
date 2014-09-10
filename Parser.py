@@ -1,5 +1,5 @@
-from GAFpy import Tags
-from GAFpy.utils import readU32, readU16, readU8, readFloat, readString, readVec, readRect
+import Tags
+from utils import readU32, readU16, readU8, readFloat, readString, readVec, readRect
 import zlib, io
 
 class Parser:

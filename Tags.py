@@ -1,5 +1,5 @@
 import struct
-from GAFpy.utils import readS32, readU32, readU16, readU8, readFloat, readString, readVec, readColor, readAffineTransform, readRect
+from utils import readS32, readU32, readU16, readU8, readFloat, readString, readVec, readColor, readAffineTransform, readRect
 #import GAFpy.Parser
 
 def readTag(inStream, parent, context):
