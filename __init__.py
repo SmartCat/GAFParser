@@ -1,4 +1,18 @@
-"""Package 
+""" Package for parsing GAF files
+
+Returns dictionary of header and tags in GAF
+
+import GAFpy, os
+
+gafFiles = [a for a in os.listdir('.') if os.path.isfile(a) and os.path.splitext(a)[1] == '.gaf']
+for f in gafFiles:
+	g = GAFpy.load(f)
+	majorVersion = g['header']['majorVersion']
+	minorVersion = g['header']['minorVersion']
+	compressed = g['header']['compressed']
+	print("GAF v{0}.{1} \tCompressed {2}".format(majorVersion, minorVersion, compressed))
+
+
 """
 from GAFpy.Parser import Parser
 
