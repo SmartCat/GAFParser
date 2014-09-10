@@ -29,7 +29,7 @@ class Parser:
 
 		majorVersion = readU8(inStream)
 		minorVersion = readU8(inStream)
-		print("GAF v{0}.{1}".format(majorVersion, minorVersion))
+		#print("GAF v{0}.{1}".format(majorVersion, minorVersion))
 		fileLength = readU32(inStream)
 
 		if compressed:

@@ -8,7 +8,7 @@ def readTag(inStream, parent, context):
 	tag = Tag(context)
 	try:
 		tag = TagList[tagId](context)
-		print type(tag)
+		#print type(tag)
 	except KeyError:
 		print("GAF format warning. Unknonwn tag with number {0}".format(tagId))
 	tag.parse(inStream, parent)
