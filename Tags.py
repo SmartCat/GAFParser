@@ -284,12 +284,21 @@ class TagDefineNamedParts(Tag):
 			part['objectIdRef'] = readU32(inStream)
 			part['name'] = readString(inStream)
 			self.data['parts'].append(part)
-
 	
 class TagDefineSequences(Tag):
-	"""xxx"""
+	"""Named frames are stored as sequences"""
 	def __init__(self, context):
 		Tag.__init__(self, context)
+
+	def doParse(self, inStream, length, parent):
+		count = readU32(inStream)
+		self.data['sequences'] = []
+		for i in range (0, count):
+			seq = {}
+			seq['name'] = readString(inStream)
+			seq['start'] = readU16(inStream)
+			seq['end'] = readU16(inStream)
+			self.data['sequences'].append(seq)
 
 class TagDefineTextFields(Tag):
 	"""xxx"""
