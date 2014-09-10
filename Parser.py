@@ -1,6 +1,6 @@
 from GAFpy import Tags
 from GAFpy.utils import readU32, readU16, readU8, readFloat, readString, readVec, readRect
-
+import zlib, io
 
 class Parser:
 	_context = {}
@@ -12,12 +12,12 @@ class Parser:
 		return self._context
 
 	def parse(self, inStream):
-		self.readHeader(inStream)
+		_inStream = self.readHeader(inStream)
 		self._context["tags"] = []
-
+		
 		lastTag = Tags.Tag(self)
 		while type(lastTag) is not Tags.TagEnd:
-			lastTag = Tags.readTag(inStream, self._context["tags"], self._context)
+			lastTag = Tags.readTag(_inStream, self._context["tags"], self._context)
 
 
 
@@ -32,6 +32,12 @@ class Parser:
 		print("GAF v{0}.{1}".format(majorVersion, minorVersion))
 		fileLength = readU32(inStream)
 
+		if compressed:
+			decompressed = zlib.decompress(inStream.read())
+			_inStream = io.BytesIO(decompressed)
+		else:
+			_inStream = inStream
+
 		h = {}
 		h['valid'] = valid
 		h['compressed'] = compressed
@@ -40,9 +46,11 @@ class Parser:
 
 		self._context['header'] = h
 		if(majorVersion < 4):
-			self.readHeaderEndV3(inStream)
+			self.readHeaderEndV3(_inStream)
 		else:
-			self.readHeaderEndV4(inStream)
+			self.readHeaderEndV4(_inStream)
+
+		return _inStream
 
 
 	def readHeaderEndV3(self, inStream):
