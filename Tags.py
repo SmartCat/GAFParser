@@ -239,14 +239,14 @@ class TagDefineAnimationFrames(Tag):
 				if filterType == self.GFT_Blur:
 					filt['type'] = 'blur'
 					filt['blurSize'] = readVec(inStream)					
-				elif filt == self.GFT_Glow:
+				elif filterType == self.GFT_Glow:
 					filt['type'] = 'glow'
 					filt['color'] = readColor(inStream)
 					filt['blurSize'] = readVec(inStream)
 					filt['strength'] = readFloat(inStream)
 					filt['innerGlow'] = bool(readU8(inStream))
 					filt['knockout'] = bool(readU8(inStream))
-				elif filt == self.GFT_DropShadow:
+				elif filterType == self.GFT_DropShadow:
 					filt['type'] = 'dropShadow'
 					filt['color'] = readColor(inStream)
 					filt['angle'] = readFloat(inStream)
@@ -254,16 +254,19 @@ class TagDefineAnimationFrames(Tag):
 					filt['strength'] = readFloat(inStream)
 					filt['innerShadow'] = readFloat(inStream)
 					filt['knockout'] = readFloat(inStream)
-				elif filt == self.GFT_ColorMatrix:
+				elif filterType == self.GFT_ColorMatrix:
 					filt['type'] = 'colorMatrix'
-					matrix = []
-					matrix2 = []
+					matrix = {}
+					matrix2 = {}
 					for i in range(0, 4):
 						for j in range(0, 4):
 							matrix[j * 4 + i] = readFloat(inStream)
 						matrix2[i] = readFloat(inStream) / 256
 					filt['matrix'] = matrix
 					filt['matrix2'] = matrix2
+				else:
+					filt['type'] = 'unknown'
+					filt['id'] = filterType
 				state['effects'].append(filt)
 
 		if hasMasks:
