@@ -20,7 +20,6 @@ class Parser:
 			lastTag = Tags.readTag(_inStream, self._context["tags"], self._context)
 
 
-
 	def readHeader(self, inStream):
 		footprint = readU32(inStream)
 		valid = (footprint == 0x00474146) or (footprint == 0x00474143)

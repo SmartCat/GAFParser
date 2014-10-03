@@ -30,10 +30,11 @@ class Tag(object):
 
 	def parse(self, inStream, parent):
 		length = readU32(inStream)
+		#print("{1} length is {0}".format(length, self.type()))
 		self.doParse(inStream, length, parent)
 
 	def doParse(self, inStream, length, parent):
-		#print("Tag length is {0}".format(length))
+		#print("{1} length is {0}".format(length, self.type()))
 		inStream.read(length)
 
 	def type(self):
@@ -57,9 +58,7 @@ class TagEnd(Tag):
 	"""Final tag"""
 	def __init__(self, context):
 		Tag.__init__(self, context)
-
-	def parse(self, inStream, parent):
-		return
+	
 
 class TagDefineAtlas(Tag):
 	"""All used atlases in animation"""
@@ -446,7 +445,9 @@ class TagDefineTimeline(Tag):
 		if hasLinkage:
 			linkageName = readString(inStream)
 		d = []
-		readTag(inStream, d, self._context)
+		lastTag = Tag(self)
+		while type(lastTag) is not TagEnd:
+			lastTag = readTag(inStream, d, self._context)
 		self._data['tags'] = d
 
 TagList = {
@@ -460,8 +461,8 @@ TagList = {
 7: TagDefineTextFields,
 8: TagDefineAtlas,
 9: TagDefineStage,
-11: TagDefineAnimationMasks,
 10: TagDefineAnimationObjects,
+11: TagDefineAnimationMasks,
 12: TagDefineAnimationFrames2,
 13: TagDefineTimeline}
 
