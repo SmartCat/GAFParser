@@ -248,11 +248,12 @@ class TagDefineAnimationFrames(Tag):
 				elif filterType == self.GFT_DropShadow:
 					filt['type'] = 'dropShadow'
 					filt['color'] = readColor(inStream)
+					filt['blurSize'] = readVec(inStream)
 					filt['angle'] = readFloat(inStream)
 					filt['distance'] = readFloat(inStream)
 					filt['strength'] = readFloat(inStream)
-					filt['innerShadow'] = readFloat(inStream)
-					filt['knockout'] = readFloat(inStream)
+					filt['innerShadow'] = bool(readU8(inStream))
+					filt['knockout'] = bool(readU8(inStream))
 				elif filterType == self.GFT_ColorMatrix:
 					filt['type'] = 'colorMatrix'
 					matrix = {}
